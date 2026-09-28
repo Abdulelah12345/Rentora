@@ -58,5 +58,20 @@ public class UserController {
         return ResponseEntity.status(200).body(new ApiResponse("User deleted successfully"));
     }
 
+    @PostMapping("/item-request/{renterId}")
+    public ResponseEntity<?> requestNeededItem(@PathVariable Integer renterId, @RequestBody String itemDescription) {
 
+
+        if (itemDescription == null || itemDescription.isBlank()) {
+            return ResponseEntity.status(400).body(new ApiResponse("Item description cannot be empty"));
+        }
+
+        int result = userService.requestNeededItem(renterId, itemDescription);
+
+        if (result == 1) {
+            return ResponseEntity.status(400).body(new ApiResponse("Renter not found"));
+        }
+
+        return ResponseEntity.status(200).body(new ApiResponse("Your request has been broadcasted to all users successfully!"));
+    }
 }
