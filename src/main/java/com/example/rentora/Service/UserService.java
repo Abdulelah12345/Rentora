@@ -61,5 +61,27 @@ public class UserService {
         userRepository.delete(oldUser);
         return true ;
     }
+    public int requestNeededItem(Integer renterId, String itemDescription) {
+        User renter = userRepository.findUserById(renterId);
+        if (renter == null) {
+            return 1;
+        }
 
+
+        List<User> allUsers = userRepository.findAll();
+
+        String subject = "Rentora - طلب منتج جديد من أحد المستخدمين!";
+        String body = "أهلاً بك،\n\n" +
+                "المستخدم (" + renter.getName() + ") يبحث عن منتج بالمواصفات التالية:\n\n" +
+                "📝 Description: " + itemDescription + "\n\n" +
+                "إذا كان لديك هذا المنتج وتود تأجيره، يمكنك التواصل معه عبر البريد: " + renter.getEmail();
+
+        for (User user : allUsers) {
+            if (user.getEmail() != null && !user.getId().equals(renterId)) {
+                emailService.sendEmail(user.getEmail(), subject, body);
+            }
+        }
+
+        return 0;
+    }
 }
