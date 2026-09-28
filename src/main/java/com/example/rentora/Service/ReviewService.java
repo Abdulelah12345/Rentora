@@ -9,7 +9,7 @@ import com.example.rentora.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 @Service
@@ -41,7 +41,7 @@ public class ReviewService {
 
         review.setReviewerId(reviewerId);
         review.setRentalId(rentalId);
-
+        review.setProductId(rentedProduct.getProductId());
         reviewRepository.save(review);
         return 0;
     }
@@ -68,6 +68,19 @@ public class ReviewService {
         reviewRepository.delete(review);
         return true;
     }
+    public double getAverageRating(Integer productId) {
+        List<Review> reviews = reviewRepository.findReviewsByProductId(productId);
 
+        if (reviews.isEmpty()) {
+            return 0.0;
+        }
+
+        double sum = 0;
+        for (Review review : reviews) {
+            sum += review.getRating();
+        }
+
+        return sum / reviews.size();
+    }
 
 }
