@@ -18,7 +18,6 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // GET - عرض جميع التقييمات
     @GetMapping("/get")
     public ResponseEntity<?> getAllReviews() {
         List<Review> reviews = reviewService.getAllReviews();
@@ -28,7 +27,6 @@ public class ReviewController {
         return ResponseEntity.status(200).body(reviews);
     }
 
-    // POST - إضافة تقييم جديد لمستأجر على عملية إيجار محددة
     @PostMapping("/add/{reviewerId}/{rentalId}")
     public ResponseEntity<?> addReview(@PathVariable Integer reviewerId, @PathVariable Integer rentalId, @Valid @RequestBody Review review, Errors errors) {
         if (errors.hasErrors()) {
@@ -76,5 +74,12 @@ public class ReviewController {
         }
 
         return ResponseEntity.status(200).body(new ApiResponse("Review deleted successfully"));
+    }
+
+
+    @GetMapping("/average-rating/{productId}")
+    public ResponseEntity<?> getAverageRating(@PathVariable Integer productId) {
+        double average = reviewService.getAverageRating(productId);
+        return ResponseEntity.status(200).body(average);
     }
 }
