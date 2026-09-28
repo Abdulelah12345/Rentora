@@ -1,5 +1,4 @@
 # Rentora
-# Rentora
 
 **Rentora** is a Spring Boot-based product rental platform that allows users to list products for rent, request rentals, manage rental transactions, review products, and communicate with product owners.
 
