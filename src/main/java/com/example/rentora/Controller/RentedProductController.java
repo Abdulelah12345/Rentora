@@ -27,7 +27,6 @@ public class RentedProductController {
         return ResponseEntity.status(200).body(list);
     }
 
-    // تم تحديث الرابط ليمرر renterId و productId
     @PostMapping("/add/{renterId}/{productId}")
     public ResponseEntity<?> rentProduct(@PathVariable Integer renterId, @PathVariable Integer productId, @Valid @RequestBody RentedProduct rentedProduct, Errors errors) {
         if (errors.hasErrors()) {
