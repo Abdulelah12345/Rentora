@@ -5,7 +5,10 @@ import com.example.rentora.Model.User;
 import com.example.rentora.Repository.ProductRepository;
 import com.example.rentora.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -15,6 +18,9 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+
+
+
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
@@ -74,7 +80,7 @@ public class ProductService {
         }
 
         if (days <= 0) {
-            return -1.0; //check it
+            return -1.0;
         }
 
 
@@ -126,4 +132,63 @@ public class ProductService {
         productRepository.save(product);
         return 0;
     }
+
+
+// I have to change openAI to get something better
+@Value("${gemini.api.key}")
+private String geminiApiKey;
+
+    public String getAiPriceSuggestion(String productName, Double originalPrice) {
+
+
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + geminiApiKey.trim();
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String prompt = "اقترح سعر تأجير يومي مناسب بالريال السعودي لمنتج إسمه: " + productName +
+                " (سعره الأصلي عند الشراء: " + originalPrice + " ريال). " +
+                "اعطني الإجابة في سطرين فقط: السعر اليومي الموصى به، ونصيحة تسويقية بسيطة للمالك.";
+
+        String jsonBody = "{"
+                + "\"contents\": [{"
+                + "  \"parts\": [{\"text\": \"" + prompt + "\"}]"
+                + "}]"
+                + "}";
+
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            String responseText = response.getBody();
+
+            if (responseText != null && responseText.contains("\"text\": \"")) {
+                int startIndex = responseText.indexOf("\"text\": \"") + 9;
+
+                int endIndex = responseText.indexOf("thoughtSignature", startIndex);
+
+                if (endIndex != -1) {
+                    endIndex = responseText.lastIndexOf("\"", endIndex - 1);
+                } else {
+                    endIndex = responseText.indexOf("\"\n", startIndex);
+                    if (endIndex == -1) {
+                        endIndex = responseText.indexOf("\"", startIndex);
+                    }
+                }
+
+                String aiAnswer = responseText.substring(startIndex, endIndex);
+                return aiAnswer.replace("\\n", "\n").replace("\\\"", "\"");
+            }
+
+            return "تعذر استخراج اقتراح السعر حالياً.";
+
+        } catch (Exception e) {
+
+            return "سعر التأجير المقترح تقريبياً: " + (originalPrice * 0.02) + "Gemini API Error: " + e.getMessage() + " ريال/يوم.";
+        }
+    }
+
+
 }
