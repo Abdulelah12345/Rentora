@@ -2,6 +2,7 @@ package com.example.rentora.Controller;
 
 import com.example.rentora.Api.ApiResponse;
 import com.example.rentora.Model.RentalRequest;
+import com.example.rentora.Service.ProductService;
 import com.example.rentora.Service.RentalRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -110,6 +111,47 @@ public class RentalRequestController {
         return ResponseEntity.status(200).body(new ApiResponse("All pending requests rejected successfully"));
     }
 
+
+    @PutMapping("/updatedates/{requestId}/{renterId}")
+    public ResponseEntity<?> updateRequestDates(@PathVariable Integer requestId, @PathVariable Integer renterId, @Valid @RequestBody RentalRequest request, Errors errors) {
+        if (errors.hasErrors()) {
+            String message = errors.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(400).body(new ApiResponse(message));
+        }
+
+        int result = rentalRequestService.updateRequestDates(requestId, renterId, request);
+
+        if (result == 1)
+            return ResponseEntity.status(400).body(new ApiResponse("Rental request not found"));
+        if (result == 2)
+            return ResponseEntity.status(400).body(new ApiResponse("You can only update your own requests"));
+        if (result == 3)
+            return ResponseEntity.status(400).body(new ApiResponse("Cannot update dates for a request that is already processed"));
+        if (result == 4)
+            return ResponseEntity.status(400).body(new ApiResponse("End date cannot be before start date"));
+
+        return ResponseEntity.status(200).body(new ApiResponse("Rental request dates updated and notification sent to owner successfully"));
+    }
+
+
+    @PostMapping("/ask/{productId}/{renterId}")
+    public ResponseEntity<?> askProductQuestion(@PathVariable Integer productId, @PathVariable Integer renterId, @RequestBody String question) {
+
+        if (question == null || question.isBlank()) {
+            return ResponseEntity.status(400).body(new ApiResponse("Question cannot be empty"));
+        }
+
+        int result = rentalRequestService.askProductQuestion(productId, renterId, question);
+
+        if (result == 1) {
+            return ResponseEntity.status(400).body(new ApiResponse("Product not found"));
+        }
+        if (result == 2) {
+            return ResponseEntity.status(400).body(new ApiResponse("User not found"));
+        }
+
+        return ResponseEntity.status(200).body(new ApiResponse("Question sent to the product owner successfully"));
+    }
 
 
 }
