@@ -210,5 +210,76 @@ public class RentalRequestService {
         return 0;
     }
 
+    public int updateRequestDates(Integer requestId, Integer renterId, RentalRequest updatedRequest) {
+        RentalRequest request = rentalRequestRepository.findRentalRequestById(requestId);
+        if (request == null) {
+            return 1;
+        }
+
+        if (!request.getRenterId().equals(renterId)) {
+            return 2;
+        }
+
+        if (!"PENDING".equals(request.getStatus())) {
+            return 3;
+        }
+
+        if (updatedRequest.getEndDate().isBefore(updatedRequest.getStartDate())) {
+            return 4;
+        }
+
+
+        request.setStartDate(updatedRequest.getStartDate());
+        request.setEndDate(updatedRequest.getEndDate());
+        rentalRequestRepository.save(request);
+
+
+        Product product = productRepository.findProductById(request.getProductId());
+        if (product != null) {
+            User owner = userRepository.findUserById(product.getOwnerId());
+            User renter = userRepository.findUserById(renterId);
+
+            if (owner != null && renter != null) {
+                String subject = "Rentora - تعديل تواريخ طلب استئجار";
+                String body = "أهلاً " + owner.getName() + "،\n\n" +
+                        "قام المستأجر (" + renter.getName() + ") بتحديث تواريخ طلب استئجار منتجك (" + product.getName() + ").\n\n" +
+                        "التواريخ الجديدة:\n" +
+                        "- تاريخ البداية: " + request.getStartDate() + "\n" +
+                        "- تاريخ النهاية: " + request.getEndDate() + "\n\n" +
+                        "يمكنك مراجعة الطلب وقبوله أو رفضه عبر المنصة.";
+
+                emailService.sendEmail(owner.getEmail(), subject, body);
+            }
+        }
+
+        return 0;
+    }
+
+
+    public int askProductQuestion(Integer productId, Integer renterId, String question) {
+        Product product = productRepository.findProductById(productId);
+        if (product == null) {
+            return 1;
+        }
+
+        User owner = userRepository.findUserById(product.getOwnerId());
+        User renter = userRepository.findUserById(renterId);
+
+        if (owner == null || renter == null) {
+            return 2;
+        }
+
+
+        String subject = "Rentora - استفسار جديد حول منتجك: " + product.getName();
+        String body = "أهلاً " + owner.getName() + "،\n\n" +
+                "لديك استفسار جديد من المستأجر (" + renter.getName() + ") قبل تقديم طلب التأجير:\n\n" +
+                "📌 المنتج: " + product.getName() + "\n" +
+                "💬 السؤال: " + question + "\n\n" +
+                "يمكنك التواصل مع المستأجر عبر البريد الإلكتروني: " + renter.getEmail();
+
+        emailService.sendEmail(owner.getEmail(), subject, body);
+
+        return 0;
+    }
 
 }
