@@ -120,4 +120,16 @@ public class ProductController {
 
         return ResponseEntity.status(200).body(new ApiResponse("Product price updated successfully"));
     }
+
+    @GetMapping("/ai-price-suggestion/{productName}/{originalPrice}")
+    public ResponseEntity<?> getAiPriceSuggestion(@PathVariable String productName,@PathVariable Double originalPrice) {
+
+        if (originalPrice == null || originalPrice <= 0) {
+            return ResponseEntity.status(400).body(new ApiResponse("Please provide a valid original price"));
+        }
+
+        String aiSuggestion = productService.getAiPriceSuggestion(productName, originalPrice);
+
+        return ResponseEntity.status(200).body(new ApiResponse(aiSuggestion));
+    }
 }
